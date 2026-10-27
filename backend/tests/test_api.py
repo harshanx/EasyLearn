@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -71,6 +72,28 @@ class TestAPIEndpoints(unittest.TestCase):
         data = response.json()
         self.assertIsInstance(data, list)
         self.assertGreater(len(data), 0)
+
+    def test_user_list_forbidden_to_non_admin(self):
+        response = self.client.get("/api/v1/users/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_public_registration_cannot_create_admin(self):
+        response = self.client.post("/api/v1/users/", json={
+            "username": "blocked-admin",
+            "email": "blocked-admin@example.com",
+            "password": "not-a-real-account-password",
+            "role": "admin",
+        })
+        self.assertEqual(response.status_code, 403)
+
+    @patch("ml.predictor.get_predictor", side_effect=RuntimeError("model unavailable"))
+    def test_model_failure_returns_service_unavailable(self, _mock_predictor):
+        response = self.client.post("/api/v1/screenings/predict", json={
+            "student_id": "STU001",
+            "features": {"reading_difficulty": 4.0},
+        })
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("no result was generated", response.json()["detail"])
 
 if __name__ == '__main__':
     unittest.main()

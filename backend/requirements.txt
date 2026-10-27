@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 sqlalchemy
+psycopg[binary]
 pydantic[email]
 pydantic-settings
 python-multipart
@@ -13,5 +14,5 @@ xgboost
 shap
 joblib
 email-validator
-httpx
+httpx2
 

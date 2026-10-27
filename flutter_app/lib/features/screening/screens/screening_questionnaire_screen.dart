@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/screening_service.dart';
 import 'screening_result_screen.dart';
@@ -91,8 +90,9 @@ class _ScreeningQuestionnaireScreenState
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
+        CupertinoPageRoute(
           builder: (_) => ScreeningResultScreen(
+            studentId: widget.studentId,
             studentName: widget.studentName,
             result: result,
             scores: Map<String, double>.from(_scores),
@@ -101,10 +101,11 @@ class _ScreeningQuestionnaireScreenState
       );
     } catch (e) {
       if (!mounted) return;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error running screening: ${e.toString()}'),
-          backgroundColor: AppTheme.pitchBlack,
+          backgroundColor: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
         ),
@@ -116,75 +117,83 @@ class _ScreeningQuestionnaireScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? AppTheme.darkBackground : const Color(0xFFFFFFFF);
+    final surface = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F9);
+    final fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A);
+    final border = isDark ? AppTheme.darkHairline : const Color(0xFFE5E5EA);
+    final textMuted = isDark ? AppTheme.ashGray : const Color(0xFF666666);
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface).withOpacity(0.9),
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, size: 22),
+      backgroundColor: bg,
+      appBar: CupertinoNavigationBar(
+        backgroundColor: bg.withOpacity(0.9),
+        border: Border(bottom: BorderSide(color: border, width: 0.5)),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Icon(CupertinoIcons.back, color: fg),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'Live Screening Session',
-          style: GoogleFonts.manrope(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
+        middle: Text(
+          'LIVE SCREENING',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.5,
+            color: fg,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-              child: Text(
-                widget.studentName.isNotEmpty ? widget.studentName[0].toUpperCase() : 'S',
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
-                ),
+        trailing: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: fg,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              widget.studentName.isNotEmpty ? widget.studentName[0].toUpperCase() : 'S',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: bg,
               ),
             ),
           ),
-        ],
+        ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
             // Student Profile Inset Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    child: Text(
-                      widget.studentName.isNotEmpty
-                          ? widget.studentName.split(' ').map((e) => e[0]).take(2).join()
-                          : 'ST',
-                      style: GoogleFonts.manrope(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: fg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.studentName.isNotEmpty
+                            ? widget.studentName.split(' ').map((e) => e[0]).take(2).join()
+                            : 'ST',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: bg,
+                        ),
                       ),
                     ),
                   ),
@@ -195,51 +204,51 @@ class _ScreeningQuestionnaireScreenState
                       children: [
                         Text(
                           widget.studentName,
-                          style: GoogleFonts.manrope(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
+                            color: fg,
                           ),
                         ),
                         Text(
                           'ID: ${widget.studentId} • ${widget.grade ?? "Std 4-B"}',
-                          style: GoogleFonts.hankenGrotesk(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.slateGray,
+                            color: textMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                      color: isDark ? AppTheme.darkSurfaceContainer : const Color(0xFFE5E5EA),
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
                       'IN PROGRESS',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
-                        color: theme.colorScheme.onSurface,
+                        color: fg,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // Header Marker
             Text(
               'COGNITIVE DOMAIN RATINGS (1 TO 5 SCALE)',
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
             const SizedBox(height: 12),
@@ -251,86 +260,74 @@ class _ScreeningQuestionnaireScreenState
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                    width: 0.5,
-                  ),
+                  color: surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: border, width: 0.5),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       domain['title']!,
-                      style: GoogleFonts.manrope(
-                        fontSize: 15,
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.2,
+                        color: fg,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       domain['subtitle']!,
-                      style: GoogleFonts.hankenGrotesk(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.slateGray,
-                        height: 1.35,
+                        color: textMuted,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 20),
 
-                    // Likert 5-Segmented Rating Control
+                    // Segmented Rating Scale
                     Row(
                       children: List.generate(5, (index) {
-                        final scoreVal = (index + 1).toDouble();
-                        final isSelected = currentVal == scoreVal;
-                        final labels = ['1 Never', '2 Rare', '3 Sometimes', '4 Often', '5 Always'];
+                        final val = (index + 1).toDouble();
+                        final isSelected = currentVal == val;
+                        final isFirst = index == 0;
+                        final isLast = index == 4;
+
+                        BorderRadius borderRadius = BorderRadius.zero;
+                        if (isFirst) {
+                          borderRadius = const BorderRadius.horizontal(left: Radius.circular(8));
+                        } else if (isLast) {
+                          borderRadius = const BorderRadius.horizontal(right: Radius.circular(8));
+                        }
 
                         return Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              setState(() {
-                                _scores[key] = scoreVal;
-                              });
+                              setState(() => _scores[key] = val);
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Container(
+                              height: 38,
                               decoration: BoxDecoration(
-                                color: isSelected
-                                    ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-                                    : (isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow),
-                                borderRadius: BorderRadius.circular(12),
+                                color: isSelected ? fg : bg,
+                                borderRadius: borderRadius,
+                                border: Border.all(
+                                  color: isSelected ? fg : border,
+                                  width: 0.5,
+                                ),
                               ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '${index + 1}',
-                                    style: GoogleFonts.hankenGrotesk(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: isSelected
-                                          ? (isDark ? AppTheme.pitchBlack : AppTheme.pureWhite)
-                                          : theme.colorScheme.onSurface,
-                                    ),
+                              child: Center(
+                                child: Text(
+                                  val.toInt().toString(),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                    color: isSelected ? bg : fg,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    labels[index].split(' ').last,
-                                    style: GoogleFonts.hankenGrotesk(
-                                      fontSize: 9,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected
-                                          ? (isDark ? AppTheme.pitchBlack : AppTheme.pureWhite).withOpacity(0.85)
-                                          : AppTheme.slateGray,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -342,120 +339,116 @@ class _ScreeningQuestionnaireScreenState
               );
             }).toList(),
 
-            const SizedBox(height: 8),
-            // Observational Clinical Tags Section
+            const SizedBox(height: 16),
+
+            // Rapid Clinical Tagging Section
             Text(
               'OBSERVATIONAL CLINICAL TAGS',
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _clinicalTags.keys.map((tag) {
-                final active = _clinicalTags[tag]!;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _clinicalTags[tag] = !active;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-                          : (isDark ? AppTheme.darkSurface : AppTheme.pureWhite),
-                      borderRadius: BorderRadius.circular(9999),
-                      border: Border.all(
-                        color: active
-                            ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-                            : (isDark ? AppTheme.darkHairline : AppTheme.paleHairline),
-                        width: 0.5,
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
+              ),
+              child: Wrap(
+                spacing: 8.0,
+                runSpacing: 12.0,
+                children: _clinicalTags.keys.map((tag) {
+                  final isSelected = _clinicalTags[tag]!;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _clinicalTags[tag] = !isSelected);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? fg : bg,
+                        borderRadius: BorderRadius.circular(9999),
+                        border: Border.all(
+                          color: isSelected ? fg : border,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelected)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Icon(CupertinoIcons.checkmark_alt, size: 14, color: bg),
+                            ),
+                          Text(
+                            tag,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? bg : fg,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          active ? CupertinoIcons.checkmark_alt : CupertinoIcons.add,
-                          size: 14,
-                          color: active
-                              ? (isDark ? AppTheme.pitchBlack : AppTheme.pureWhite)
-                              : theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          tag,
-                          style: GoogleFonts.hankenGrotesk(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: active
-                                ? (isDark ? AppTheme.pitchBlack : AppTheme.pureWhite)
-                                : theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
 
             const SizedBox(height: 32),
 
             // Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submitScreening,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                  foregroundColor: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9999),
-                  ),
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CupertinoActivityIndicator(),
                 ),
-                child: _isLoading
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  color: fg,
+                  borderRadius: BorderRadius.circular(9999),
+                  onPressed: _submitScreening,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9999),
+                      border: Border.all(color: fg, width: 1),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          CupertinoActivityIndicator(
-                            color: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
-                          ),
-                          const SizedBox(width: 10),
                           Text(
-                            'Processing Evaluation...',
-                            style: GoogleFonts.hankenGrotesk(
+                            'Run Cognitive Model',
+                            style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
+                              color: bg,
                             ),
                           ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Run Explainable AI Assessment',
-                            style: GoogleFonts.hankenGrotesk(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(CupertinoIcons.arrow_right, size: 18),
+                          const SizedBox(width: 6),
+                          Icon(CupertinoIcons.sparkles, size: 16, color: bg),
                         ],
                       ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+
             const SizedBox(height: 24),
           ],
         ),

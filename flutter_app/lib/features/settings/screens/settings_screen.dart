@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:learning_difficulty_screening/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
@@ -14,65 +13,62 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final localizations = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? AppTheme.darkBackground : const Color(0xFFFFFFFF);
+    final surface = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F9);
+    final fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A);
+    final border = isDark ? AppTheme.darkHairline : const Color(0xFFE5E5EA);
+    final textMuted = isDark ? AppTheme.ashGray : const Color(0xFF666666);
+    final textSubtle = isDark ? AppTheme.slateGray : const Color(0xFFA1A1A6);
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface).withOpacity(0.9),
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, size: 22),
+      backgroundColor: bg,
+      appBar: CupertinoNavigationBar(
+        backgroundColor: bg.withOpacity(0.9),
+        border: Border(bottom: BorderSide(color: border, width: 0.5)),
+        middle: Text(
+          localizations.settings.toUpperCase(),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.5,
+            color: fg,
+          ),
+        ),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Icon(CupertinoIcons.back, color: fg),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          localizations.settings,
-          style: GoogleFonts.manrope(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Text('Done', style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 15)),
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Done',
-              style: GoogleFonts.hankenGrotesk(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
             // Header Title Block
             Text(
               'ACCESSIBILITY & DISPLAY PREFERENCES',
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Settings & Accessibility',
-              style: GoogleFonts.manrope(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
-                color: theme.colorScheme.onSurface,
+                color: fg,
               ),
             ),
             const SizedBox(height: 16),
@@ -81,12 +77,9 @@ class SettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
+                color: surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,276 +93,450 @@ class SettingsScreen extends ConsumerWidget {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: AppTheme.pitchBlack,
+                              color: Color(0xFF10B981),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
                             'LIVE PREVIEW',
-                            style: GoogleFonts.hankenGrotesk(
-                              fontSize: 11,
+                            style: TextStyle(
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: AppTheme.slateGray,
+                              letterSpacing: 1.0,
+                              color: textMuted,
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(9999),
-                        ),
-                        child: Text(
-                          'Scale: ${(settings.textSizeMultiplier * 100).toInt()}%',
-                          style: GoogleFonts.hankenGrotesk(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
+                      Icon(CupertinoIcons.textformat_size, size: 14, color: textSubtle),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(12),
+                  Text(
+                    'The quick brown fox jumps over the lazy dog.',
+                    style: TextStyle(
+                      fontSize: 16 * settings.textSizeMultiplier,
+                      color: fg,
                     ),
-                    child: Text(
-                      'The quick brown fox jumps over the lazy dog. AI empowers personalized learning.',
-                      style: GoogleFonts.hankenGrotesk(
-                        fontSize: 14 * settings.textSizeMultiplier,
-                        height: 1.45,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Reading metrics and visual tracking exercises will render text at this exact scale.',
+                    style: TextStyle(
+                      fontSize: 12 * settings.textSizeMultiplier,
+                      color: textMuted,
+                      height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Inset Grouped Section 1: Appearance & Theme
-            Text(
-              'CANVAS PALETTE & THEME',
-              style: GoogleFonts.hankenGrotesk(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: AppTheme.slateGray,
-              ),
-            ),
-            const SizedBox(height: 8),
+            // Base Settings Group
             Container(
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 children: [
-                  RadioListTile<ThemeMode>(
-                    value: ThemeMode.light,
-                    groupValue: settings.themeMode,
-                    title: Text('Pure White (Light Mode)', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    activeColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    onChanged: (mode) { if (mode != null) notifier.setThemeMode(mode); },
+                  // High Contrast Mode Toggle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: fg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(CupertinoIcons.circle_lefthalf_fill, size: 16, color: bg),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'High Contrast Mode',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: fg,
+                                ),
+                              ),
+                              Text(
+                                'Increases border thickness & stroke weight.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: settings.highContrast,
+                          activeColor: fg,
+                          trackColor: border,
+                          thumbColor: bg,
+                          onChanged: (val) => notifier.setHighContrast(val),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(height: 1),
-                  RadioListTile<ThemeMode>(
-                    value: ThemeMode.dark,
-                    groupValue: settings.themeMode,
-                    title: Text('Deep OLED (Dark Mode)', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    activeColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    onChanged: (mode) { if (mode != null) notifier.setThemeMode(mode); },
+                  Padding(
+                    padding: const EdgeInsets.only(left: 60),
+                    child: Divider(height: 1, color: border, thickness: 0.5),
                   ),
-                  const Divider(height: 1),
-                  RadioListTile<ThemeMode>(
-                    value: ThemeMode.system,
-                    groupValue: settings.themeMode,
-                    title: Text('System Automatic', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    activeColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    onChanged: (mode) { if (mode != null) notifier.setThemeMode(mode); },
+
+                  // Reduce Motion Toggle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: border,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(CupertinoIcons.wind, size: 16, color: fg),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reduce Motion',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: fg,
+                                ),
+                              ),
+                              Text(
+                                'Minimizes animations and screen transitions.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: settings.reduceMotion,
+                          activeColor: fg,
+                          trackColor: border,
+                          thumbColor: bg,
+                          onChanged: (val) => notifier.setReduceMotion(val),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 60),
+                    child: Divider(height: 1, color: border, thickness: 0.5),
+                  ),
+
+                  // Theme Mode Toggle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: fg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(CupertinoIcons.moon_fill, size: 16, color: bg),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dark Mode',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: fg,
+                                ),
+                              ),
+                              Text(
+                                'Switch between light and dark themes.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: settings.themeMode == ThemeMode.dark,
+                          activeColor: fg,
+                          trackColor: border,
+                          thumbColor: bg,
+                          onChanged: (val) {
+                            notifier.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 60),
+                    child: Divider(height: 1, color: border, thickness: 0.5),
+                  ),
+
+                  // Language Selection
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    onPressed: () => _showLanguagePicker(context, settings, notifier, bg, surface, fg, border, textMuted),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: border,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(CupertinoIcons.globe, size: 16, color: fg),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                localizations.language,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: fg,
+                                ),
+                              ),
+                              Text(
+                                _getLanguageName(settings.locale.languageCode),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(CupertinoIcons.chevron_right, size: 16, color: textSubtle),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Inset Grouped Section 2: Reading & Typography Scale
+            // Display Scaling
             Text(
-              'READING & TYPOGRAPHY SCALE',
-              style: GoogleFonts.hankenGrotesk(
+              'DISPLAY SCALING',
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                letterSpacing: 1.0,
+                color: textMuted,
               ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Text Scale',
-                        style: GoogleFonts.manrope(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
+                      Icon(CupertinoIcons.textformat_size, size: 16, color: textMuted),
                       Text(
                         '${(settings.textSizeMultiplier * 100).toInt()}%',
-                        style: GoogleFonts.hankenGrotesk(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.slateGray,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: fg,
                         ),
                       ),
+                      Icon(CupertinoIcons.textformat_size, size: 24, color: fg),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                      inactiveTrackColor: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerHigh,
-                      thumbColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                      trackHeight: 4,
-                    ),
-                    child: Slider(
-                      min: 1.0,
-                      max: 1.4,
-                      divisions: 2,
-                      value: settings.textSizeMultiplier,
-                      onChanged: (val) => notifier.setTextSizeMultiplier(val),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 24,
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        trackHeight: 2.0,
+                        activeTrackColor: fg,
+                        inactiveTrackColor: border,
+                        thumbColor: fg,
+                        overlayColor: fg.withOpacity(0.1),
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10.0),
+                      ),
+                      child: Slider(
+                        value: settings.textSizeMultiplier,
+                        min: 0.8,
+                        max: 1.5,
+                        divisions: 7,
+                        onChanged: (val) => notifier.setTextSizeMultiplier(val),
+                      ),
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Normal (100%)', style: GoogleFonts.hankenGrotesk(fontSize: 11, color: AppTheme.slateGray)),
-                      Text('Large (120%)', style: GoogleFonts.hankenGrotesk(fontSize: 11, color: AppTheme.slateGray)),
-                      Text('Extra (140%)', style: GoogleFonts.hankenGrotesk(fontSize: 11, color: AppTheme.slateGray)),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Adjust to increase legibility across clinical and interactive screens.',
+                    style: TextStyle(fontSize: 11, color: textMuted),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Inset Grouped Section 3: High Contrast & Motion
-            Text(
-              'ACCESSIBILITY & SENSORY CALM',
-              style: GoogleFonts.hankenGrotesk(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: AppTheme.slateGray,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
-              ),
+            const SizedBox(height: 32),
+            
+            // App Version Info
+            Center(
               child: Column(
                 children: [
-                  SwitchListTile(
-                    title: Text('High-Contrast Outlines', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('Enforce crisp 1.5pt borders around interactive components.', style: GoogleFonts.hankenGrotesk(fontSize: 12, color: AppTheme.slateGray)),
-                    activeColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    value: settings.highContrast,
-                    onChanged: (val) => notifier.setHighContrast(val),
+                  Text(
+                    'EasyLearn System',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: fg,
+                    ),
                   ),
-                  const Divider(height: 1),
-                  SwitchListTile(
-                    title: Text('Reduce Motion & Sensory Calm', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('Minimizes spring physics and high-frequency visual stimuli.', style: GoogleFonts.hankenGrotesk(fontSize: 12, color: AppTheme.slateGray)),
-                    activeColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                    value: settings.reduceMotion,
-                    onChanged: (val) => notifier.setReduceMotion(val),
+                  Text(
+                    'Phase 1 Architecture • Version 1.0.0 (Build 42)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                    ),
                   ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Inset Grouped Section 4: Localization
+  String _getLanguageName(String code) {
+    switch (code) {
+      case 'hi': return 'हिंदी (Hindi)';
+      case 'ta': return 'தமிழ் (Tamil)';
+      case 'ml': return 'മലയാളം (Malayalam)';
+      case 'te': return 'తెలుగు (Telugu)';
+      case 'kn': return 'ಕನ್ನಡ (Kannada)';
+      case 'mr': return 'मराठी (Marathi)';
+      case 'bn': return 'বাংলা (Bengali)';
+      case 'gu': return 'ગુજરાતી (Gujarati)';
+      default: return 'English';
+    }
+  }
+
+  void _showLanguagePicker(BuildContext context, SettingsState settings, SettingsNotifier notifier, Color bg, Color surface, Color fg, Color border, Color textMuted) {
+    final languages = [
+      {'code': 'en', 'name': 'English'},
+      {'code': 'hi', 'name': 'हिंदी (Hindi)'},
+      {'code': 'ta', 'name': 'தமிழ் (Tamil)'},
+      {'code': 'ml', 'name': 'മലയാളം (Malayalam)'},
+      {'code': 'te', 'name': 'తెలుగు (Telugu)'},
+      {'code': 'kn', 'name': 'ಕನ್ನಡ (Kannada)'},
+      {'code': 'mr', 'name': 'मराठी (Marathi)'},
+      {'code': 'bn', 'name': 'বাংলা (Bengali)'},
+      {'code': 'gu', 'name': 'ગુજરાતી (Gujarati)'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             Text(
-              'LOCALIZATION & TRILINGUAL SUPPORT',
-              style: GoogleFonts.hankenGrotesk(
-                fontSize: 11,
+              'Select Language',
+              style: TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: fg,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: settings.locale.languageCode,
-                  icon: const Icon(CupertinoIcons.chevron_down, size: 16, color: AppTheme.slateGray),
-                  onChanged: (langCode) {
-                    if (langCode != null) {
-                      notifier.setLocale(Locale(langCode));
-                    }
-                  },
-                  items: [
-                    DropdownMenuItem(
-                      value: 'en',
-                      child: Text('English (US)', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: languages.length,
+                itemBuilder: (context, index) {
+                  final lang = languages[index];
+                  final isSelected = lang['code'] == settings.locale.languageCode;
+                  return CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      notifier.setLocale(Locale(lang['code']!));
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            lang['name']!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                              color: isSelected ? fg : textMuted,
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(CupertinoIcons.checkmark_alt, color: fg, size: 20),
+                        ],
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'ml',
-                      child: Text('മലയാളം (Malayalam)', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ),
-                    DropdownMenuItem(
-                      value: 'hi',
-                      child: Text('हिन्दी (Hindi)', style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
           ],
         ),
       ),

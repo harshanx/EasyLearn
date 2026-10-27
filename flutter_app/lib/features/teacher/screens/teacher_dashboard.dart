@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
 import '../../screening/screens/screening_questionnaire_screen.dart';
-
 
 class TeacherDashboard extends ConsumerStatefulWidget {
   const TeacherDashboard({Key? key}) : super(key: key);
@@ -86,7 +84,7 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
   void _openScreeningForStudent(Map<String, dynamic> student) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      CupertinoPageRoute(
         builder: (_) => ScreeningQuestionnaireScreen(
           studentId: student['id'] as String,
           studentName: student['name'] as String,
@@ -98,8 +96,14 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? AppTheme.darkBackground : const Color(0xFFFFFFFF);
+    final surface = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F9);
+    final fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A);
+    final border = isDark ? AppTheme.darkHairline : const Color(0xFFE5E5EA);
+    final textMuted = isDark ? AppTheme.ashGray : const Color(0xFF666666);
+    final textSubtle = isDark ? AppTheme.slateGray : const Color(0xFFA1A1A6);
 
     final filteredList = _students.where((student) {
       final matchesSearch = student['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -111,34 +115,38 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface).withOpacity(0.9),
-        elevation: 0,
-        title: Text(
-          'Classroom 4-B',
-          style: GoogleFonts.manrope(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+      backgroundColor: bg,
+      appBar: CupertinoNavigationBar(
+        backgroundColor: bg.withOpacity(0.9),
+        border: Border(bottom: BorderSide(color: border, width: 0.5)),
+        middle: Text(
+          "CLASSROOM 4-B",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.5,
+            color: fg,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.gear, size: 20),
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
-          ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.square_arrow_right, size: 20),
-            onPressed: _logout,
-          ),
-        ],
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(CupertinoIcons.gear, color: fg, size: 22),
+              onPressed: () => Navigator.pushNamed(context, '/settings'),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(CupertinoIcons.arrow_right_square, color: fg, size: 22),
+              onPressed: _logout,
+            ),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
             // Header Info
             Row(
@@ -149,69 +157,72 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
                   children: [
                     Text(
                       'CLASSROOM MANAGEMENT',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
-                        color: AppTheme.slateGray,
+                        color: textMuted,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'St. Mary\'s Academy • 28 Learners',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.slateGray,
+                        color: textMuted,
                       ),
                     ),
                   ],
                 ),
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                  child: Text(
-                    '4B',
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: fg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '4B',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: bg,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Metric Overview Inset Mosaic (3 columns)
             Row(
               children: [
-                _metricBox('Screened', '24/28', '85% Complete', isDark, theme),
+                _metricBox('Screened', '24/28', '85% Complete', surface, border, textMuted, fg),
                 const SizedBox(width: 8),
-                _metricBox('Priority', '3', 'Immediate Review', isDark, theme, isAlert: true),
+                _metricBox('Priority', '3', 'Review Needed', surface, border, textMuted, fg, isAlert: true),
                 const SizedBox(width: 8),
-                _metricBox('Sessions', '11', '+2 this week', isDark, theme),
+                _metricBox('Sessions', '11', '+2 this week', surface, border, textMuted, fg),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Search Bar
             Container(
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
+                color: surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (val) => setState(() => _searchQuery = val),
-                style: GoogleFonts.hankenGrotesk(fontSize: 14, color: theme.colorScheme.onSurface),
+                style: TextStyle(fontSize: 14, color: fg),
                 decoration: InputDecoration(
                   hintText: 'Search student name or roll #...',
-                  hintStyle: GoogleFonts.hankenGrotesk(fontSize: 14, color: AppTheme.ashGray),
-                  prefixIcon: const Icon(CupertinoIcons.search, size: 18, color: AppTheme.slateGray),
+                  hintStyle: TextStyle(fontSize: 14, color: textSubtle),
+                  prefixIcon: Icon(CupertinoIcons.search, size: 18, color: textMuted),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -219,7 +230,7 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // Status Filter Chips
             SingleChildScrollView(
@@ -227,133 +238,120 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  _filterChip('all', 'All (28)', isDark),
+                  _filterChip('all', 'All (28)', surface, fg, bg, border),
                   const SizedBox(width: 8),
-                  _filterChip('elevated', 'Elevated (3)', isDark),
+                  _filterChip('elevated', 'Elevated (3)', surface, fg, bg, border),
                   const SizedBox(width: 8),
-                  _filterChip('moderate', 'Moderate (5)', isDark),
+                  _filterChip('moderate', 'Moderate (5)', surface, fg, bg, border),
                   const SizedBox(width: 8),
-                  _filterChip('pending', 'Pending (4)', isDark),
+                  _filterChip('pending', 'Pending (4)', surface, fg, bg, border),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Learner Directory Roster
+            Text(
+              "LEARNER DIRECTORY",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'LEARNER DIRECTORY',
-                          style: GoogleFonts.hankenGrotesk(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.0,
-                            color: AppTheme.slateGray,
-                          ),
-                        ),
-                        Text(
-                          'Cohort Tiering',
-                          style: GoogleFonts.hankenGrotesk(
-                            fontSize: 11,
-                            color: AppTheme.slateGray,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
+                children: filteredList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final student = entry.value;
+                  final isLast = index == filteredList.length - 1;
 
-                  ...filteredList.map((student) {
-                    final isLast = student['id'] == filteredList.last['id'];
-                    return Column(
-                      children: [
-                        InkWell(
-                          onTap: () => _openScreeningForStudent(student),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
-                                  child: Text(
-                                    student['name'].split(' ').map((e) => e[0]).take(2).join(),
-                                    style: GoogleFonts.hankenGrotesk(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
+                  return Column(
+                    children: [
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        onPressed: () => _openScreeningForStudent(student),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: border,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  student['name'].split(' ').map((e) => e[0]).take(2).join(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: fg,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            student['name'] as String,
-                                            style: GoogleFonts.manrope(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: theme.colorScheme.onSurface,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            student['roll'] as String,
-                                            style: GoogleFonts.hankenGrotesk(
-                                              fontSize: 11,
-                                              color: AppTheme.slateGray,
-                                            ),
-                                          ),
-                                        ],
+                                      Text(
+                                        student['name'] as String,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: fg,
+                                        ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      AppTheme.buildRiskBadge(student['riskLevel'] as String),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        student['roll'] as String,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: textMuted,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                ),
-                                const Icon(CupertinoIcons.chevron_right, size: 16, color: AppTheme.ashGray),
-                              ],
+                                  const SizedBox(height: 4),
+                                  _buildRiskBadge(student['riskLevel'] as String, isDark),
+                                ],
+                              ),
                             ),
-                          ),
+                            Icon(CupertinoIcons.chevron_right, size: 16, color: textSubtle),
+                          ],
                         ),
-                        if (!isLast) const Divider(height: 1),
-                      ],
-                    );
-                  }).toList(),
-                ],
+                      ),
+                      if (!isLast)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 64),
+                          child: Divider(color: border, height: 1, thickness: 0.5),
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
 
             // Start Screening Queue Action Banner
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -361,13 +359,13 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                      color: border,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       CupertinoIcons.doc_checkmark,
                       size: 20,
-                      color: theme.colorScheme.onSurface,
+                      color: fg,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -377,83 +375,77 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
                       children: [
                         Text(
                           'Screening Queue',
-                          style: GoogleFonts.manrope(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
+                            color: fg,
                           ),
                         ),
                         Text(
                           '4 learners awaiting diagnostics',
-                          style: GoogleFonts.hankenGrotesk(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.slateGray,
+                            color: textMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  ElevatedButton(
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    color: fg,
+                    borderRadius: BorderRadius.circular(9999),
+                    minSize: 0,
                     onPressed: () => _openScreeningForStudent(_students.first),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
-                      foregroundColor: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      minimumSize: Size.zero,
-                    ),
                     child: Text(
                       'Start Screen',
-                      style: GoogleFonts.hankenGrotesk(fontSize: 12, fontWeight: FontWeight.w700),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: bg),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _metricBox(String label, String value, String sub, bool isDark, ThemeData theme, {bool isAlert = false}) {
+  Widget _metricBox(String label, String value, String sub, Color surface, Color border, Color textMuted, Color fg, {bool isAlert = false}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
+          color: surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-            width: 0.5,
-          ),
+          border: Border.all(color: border, width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label.toUpperCase(),
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               value,
-              style: GoogleFonts.manrope(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
+                color: fg,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               sub,
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 10,
-                color: isAlert ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack) : AppTheme.slateGray,
+                color: isAlert ? fg : textMuted,
                 fontWeight: isAlert ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
@@ -463,33 +455,70 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
     );
   }
 
-  Widget _filterChip(String filterKey, String label, bool isDark) {
+  Widget _filterChip(String filterKey, String label, Color surface, Color fg, Color bg, Color border) {
     final isSelected = _selectedFilter == filterKey;
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = filterKey),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-              : (isDark ? AppTheme.darkSurface : AppTheme.pureWhite),
+          color: isSelected ? fg : surface,
           borderRadius: BorderRadius.circular(9999),
           border: Border.all(
-            color: isSelected
-                ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-                : (isDark ? AppTheme.darkHairline : AppTheme.paleHairline),
+            color: isSelected ? fg : border,
             width: 0.5,
           ),
         ),
         child: Text(
           label,
-          style: GoogleFonts.hankenGrotesk(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected
-                ? (isDark ? AppTheme.pitchBlack : AppTheme.pureWhite)
-                : Theme.of(context).colorScheme.onSurface,
+            color: isSelected ? bg : fg,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRiskBadge(String riskLevel, bool isDark) {
+    final normRisk = riskLevel.trim().toLowerCase();
+    Color bg;
+    Color fg;
+    Border? border;
+
+    if (normRisk == 'none' || normRisk == 'baseline' || normRisk == 'low') {
+      bg = isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+      fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      border = Border.all(color: fg, width: 1);
+    } else if (normRisk == 'mild') {
+      bg = isDark ? const Color(0xFF333333) : const Color(0xFFE5E5EA);
+      fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      border = null;
+    } else if (normRisk == 'moderate') {
+      bg = isDark ? const Color(0xFF666666) : const Color(0xFF555555);
+      fg = const Color(0xFFFFFFFF);
+      border = null;
+    } else {
+      bg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      fg = isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+      border = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: border,
+      ),
+      child: Text(
+        riskLevel.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: fg,
+          letterSpacing: 0.5,
         ),
       ),
     );

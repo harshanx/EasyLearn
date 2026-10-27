@@ -23,16 +23,18 @@ class InterventionService {
   
   // Get personalized recommendations
   Future<Map<String, dynamic>> getRecommendations({
-    required int studentAge,
-    required String studentGrade,
+    String? studentId,
+    int? studentAge,
+    String? studentGrade,
     required List<String> topFeatures,
     required String riskLevel,
   }) async {
     return await _apiService.post(
       '${ApiConfig.interventionsEndpoint}/recommend',
       body: {
-        'student_age': studentAge,
-        'student_grade': studentGrade,
+        if (studentId != null) 'student_id': studentId,
+        if (studentAge != null) 'student_age': studentAge,
+        if (studentGrade != null) 'student_grade': studentGrade,
         'top_features': topFeatures,
         'risk_level': riskLevel,
       },

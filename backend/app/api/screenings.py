@@ -5,12 +5,14 @@ import json
 from app.database import get_db
 from app.models.screening import Screening
 from app.schemas.screening import ScreeningCreate, ScreeningResponse, ScreeningRequest
+from app.auth import get_current_active_user
+from app.models.user import User
 
 router = APIRouter()
 
 
 @router.post("/", response_model=ScreeningResponse, status_code=status.HTTP_201_CREATED)
-def create_screening(screening: ScreeningCreate, db: Session = Depends(get_db)):
+def create_screening(screening: ScreeningCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     # Check if student exists
     from app.models.student import Student
     student = db.query(Student).filter(Student.id == screening.student_id).first()
@@ -35,7 +37,7 @@ def create_screening(screening: ScreeningCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/predict", response_model=ScreeningResponse)
-def predict_screening(request: ScreeningRequest, db: Session = Depends(get_db)):
+def predict_screening(request: ScreeningRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     # Find student by external student_id
     from app.models.student import Student
     student = db.query(Student).filter(Student.student_id == request.student_id).first()
@@ -68,17 +70,11 @@ def predict_screening(request: ScreeningRequest, db: Session = Depends(get_db)):
         class_probabilities = predictor.get_class_probabilities(features)
 
     except Exception as e:
-        # Fallback to mock prediction if ML model is not available
-        import random
-        probability = random.uniform(0.3, 0.95)
-        risk_level = "Elevated" if probability > 0.6 else "Lower"
-        shap_values = {
-            "reading_difficulty": 0.3 if probability > 0.6 else -0.1,
-            "writing_difficulty": 0.25 if probability > 0.6 else -0.05,
-            "memory_difficulty": 0.2 if probability > 0.6 else 0.0,
-            "attention_difficulty": 0.15 if probability > 0.6 else -0.02,
-        }
-        top_features = list(shap_values.keys())
+        # Do not return fabricated risk results when model inference is unavailable.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Screening model is unavailable; no result was generated.",
+        ) from e
 
     db_screening = Screening(
         student_id=student.id,
@@ -100,13 +96,13 @@ def predict_screening(request: ScreeningRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[ScreeningResponse])
-def get_screenings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_screenings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     screenings = db.query(Screening).offset(skip).limit(limit).all()
     return screenings
 
 
 @router.get("/{screening_id}", response_model=ScreeningResponse)
-def get_screening(screening_id: int, db: Session = Depends(get_db)):
+def get_screening(screening_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     screening = db.query(Screening).filter(Screening.id == screening_id).first()
     if screening is None:
         raise HTTPException(status_code=404, detail="Screening not found")
@@ -114,6 +110,6 @@ def get_screening(screening_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/student/{student_id}", response_model=List[ScreeningResponse])
-def get_student_screenings(student_id: int, db: Session = Depends(get_db)):
+def get_student_screenings(student_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     screenings = db.query(Screening).filter(Screening.student_id == student_id).all()
     return screenings

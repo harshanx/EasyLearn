@@ -46,7 +46,8 @@ class InterventionResponse(InterventionBase):
 
 
 class RecommendationRequest(BaseModel):
-    student_age: int
-    student_grade: str
+    student_id: Optional[str] = None
+    student_age: Optional[int] = None
+    student_grade: Optional[str] = None
     top_features: List[str]  # Top contributing features from SHAP
     risk_level: str

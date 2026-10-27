@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:learning_difficulty_screening/localization/app_localizations.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../providers/settings_provider.dart';
 
 class StudentDashboard extends ConsumerWidget {
@@ -14,13 +16,20 @@ class StudentDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final localizations = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? AppTheme.darkBackground : const Color(0xFFFFFFFF);
+    final surface = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F9);
+    final fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A);
+    final border = isDark ? AppTheme.darkHairline : const Color(0xFFE5E5EA);
+    final textMuted = isDark ? AppTheme.ashGray : const Color(0xFF666666);
+    final textSubtle = isDark ? AppTheme.slateGray : const Color(0xFFA1A1A6);
 
     final List<Map<String, dynamic>> activities = [
-      {'title': 'Letter Recognition Sound Puzzle', 'icon': Icons.music_note_outlined, 'done': true},
-      {'title': 'Card Memory Matching Challenge', 'icon': Icons.extension_outlined, 'done': true},
-      {'title': 'Trace and Write Letters', 'icon': Icons.edit_outlined, 'done': false},
-      {'title': 'Deconstruct Numbers Game', 'icon': Icons.calculate_outlined, 'done': false},
+      {'title': 'Letter Recognition Sound Puzzle', 'icon': CupertinoIcons.music_note_2, 'done': true},
+      {'title': 'Card Memory Matching Challenge', 'icon': CupertinoIcons.square_stack_3d_up, 'done': true},
+      {'title': 'Trace and Write Letters', 'icon': CupertinoIcons.pencil, 'done': false},
+      {'title': 'Deconstruct Numbers Game', 'icon': CupertinoIcons.number_square, 'done': false},
     ];
 
     final completedCount = activities.where((a) => a['done']).length;
@@ -28,257 +37,206 @@ class StudentDashboard extends ConsumerWidget {
     final progress = completedCount / totalCount;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        title: Text(
-          "Student Portal",
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+      backgroundColor: bg,
+      appBar: CupertinoNavigationBar(
+        backgroundColor: bg.withOpacity(0.9),
+        border: Border(bottom: BorderSide(color: border, width: 0.5)),
+        middle: Text(
+          "STUDENT PORTAL",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.5,
+            color: fg,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            tooltip: localizations.logout,
-            onPressed: () => _logout(context, ref),
-          ),
-        ],
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(CupertinoIcons.gear, color: fg, size: 22),
+              onPressed: () => Navigator.pushNamed(context, '/settings'),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(CupertinoIcons.arrow_right_square, color: fg, size: 22),
+              onPressed: () => _logout(context, ref),
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Welcome Board
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.primary.withOpacity(0.8),
-                    ],
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          children: [
+            // Welcome Header
+            Text(
+              "Welcome back, Student",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.8,
+                color: fg,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Let's complete your daily exercises and collect stars.",
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+                letterSpacing: -0.2,
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Progress Card (Monochrome Flat)
+            Text(
+              "My Progress",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: 56,
+                    width: 56,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 4,
+                      backgroundColor: border,
+                      valueColor: AlwaysStoppedAnimation<Color>(fg),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         Text(
-                          "${localizations.welcome}, Student!",
-                          style: theme.textTheme.headlineSmall?.copyWith(
+                          "$completedCount / $totalCount Activities",
+                          style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            letterSpacing: -0.2,
+                            color: fg,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 28,
+                        const SizedBox(height: 4),
+                        Text(
+                          "Keep going! You are doing awesome.",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textMuted,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Let's complete your daily exercises and collect stars!",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
+            ),
+            const SizedBox(height: 32),
 
-              // Progress Card
-              Text(
-                localizations.myProgress,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            // Activities List (Monochrome Inset Group)
+            Text(
+              "Today's Activities",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: textMuted,
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      height: 72,
-                      width: 72,
-                      child: CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 8,
-                        backgroundColor: theme.colorScheme.onBackground.withOpacity(0.1),
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "$completedCount / $totalCount Activities Completed",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Keep going! You are doing an awesome job.",
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onBackground.withOpacity(0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
-              const SizedBox(height: 24),
+              child: Column(
+                children: activities.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final act = entry.value;
+                  final isLast = index == activities.length - 1;
+                  final done = act['done'] as bool;
 
-              // Learning Activities List
-              Text(
-                localizations.todaysActivities,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: activities.length,
-                itemBuilder: (ctx, index) {
-                  final act = activities[index];
-                  final isDone = act['done'] as bool;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: isDone
-                              ? const Color(0xFF10B981).withOpacity(0.1)
-                              : theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          act['icon'] as IconData,
-                          color: isDone ? const Color(0xFF10B981) : theme.colorScheme.primary,
-                          size: 28,
-                        ),
-                      ),
-                      title: Text(
-                        act['title'] as String,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          decoration: isDone ? TextDecoration.lineThrough : null,
-                          color: isDone 
-                              ? theme.colorScheme.onBackground.withOpacity(0.5)
-                              : null,
-                        ),
-                      ),
-                      trailing: isDone
-                          ? Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.check_circle,
-                                color: Color(0xFF10B981),
-                                size: 20,
-                              ),
-                            )
-                          : Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.play_circle_outline,
-                                color: theme.colorScheme.primary,
-                                size: 20,
-                              ),
+                  return Column(
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Starting: ${act['title']}'),
+                              backgroundColor: fg,
+                              behavior: SnackBarBehavior.floating,
                             ),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isDone
-                                  ? "You have already completed this exercise!"
-                                  : "Starting activity: ${act['title']}",
-                            ),
-                            behavior: SnackBarBehavior.floating,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: done ? fg : border,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  act['icon'],
+                                  color: done ? bg : fg,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  act['title'],
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: done ? FontWeight.w500 : FontWeight.w600,
+                                    color: done ? textMuted : fg,
+                                    decoration: done ? TextDecoration.lineThrough : null,
+                                  ),
+                                ),
+                              ),
+                              if (done)
+                                Icon(CupertinoIcons.check_mark_circled_solid, color: fg, size: 24)
+                              else
+                                Icon(CupertinoIcons.chevron_right, color: textSubtle, size: 18),
+                            ],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                      if (!isLast)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 76),
+                          child: Divider(color: border, height: 1, thickness: 0.5),
+                        ),
+                    ],
                   );
-                },
+                }).toList(),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

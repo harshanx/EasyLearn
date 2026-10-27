@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 from app.api import users, students, screenings, auth, interventions
 
 app = FastAPI(
@@ -8,10 +9,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS from a comma-separated environment variable in deployed environments.
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "*").split(",")
+    if origin.strip()
+]
+if os.getenv("APP_ENV", "development").lower() == "production" and (
+    not allowed_origins or "*" in allowed_origins
+):
+    raise RuntimeError("Set CORS_ORIGINS to explicit trusted origins in production")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

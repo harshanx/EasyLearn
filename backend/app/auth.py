@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 from typing import Optional
 from jose import JWTError, jwt  # type: ignore # pyright: ignore # pyrefly: ignore
 from passlib.context import CryptContext  # type: ignore # pyright: ignore # pyrefly: ignore
@@ -10,7 +11,12 @@ from app.database import get_db
 from app.models.user import User
 
 # Configuration
-SECRET_KEY = "your-secret-key-change-this-in-production"  # Change this in production!
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("APP_ENV", "development").lower() == "production":
+        raise RuntimeError("SECRET_KEY must be configured in production")
+    # Development-only value. Configure SECRET_KEY for every deployed environment.
+    SECRET_KEY = "development-only-change-me"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -83,3 +89,16 @@ async def get_current_active_user(
 ) -> User:
     """Get the current active user (can be extended with is_active field)."""
     return current_user
+
+
+def require_roles(*roles):
+    """Build a dependency that restricts an endpoint to the given user roles."""
+    async def role_guard(current_user: User = Depends(get_current_active_user)) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return current_user
+
+    return role_guard

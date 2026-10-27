@@ -1,5 +1,7 @@
 # AI-Based Learning Difficulty Screening & Explainable Intervention Support Platform
 
+> **Current implementation note (verified 2026-10-27):** Several phase-by-phase sections below are historical setup notes and may be stale. The current backend runs model-backed screening with SHAP from bundled joblib artifacts; if inference fails, the API returns HTTP 503 and does not save a fabricated result. SQLite is the default database; set `DATABASE_URL` to use PostgreSQL. Production startup requires `APP_ENV=production`, `SECRET_KEY`, and explicit `CORS_ORIGINS` values. See `PROJECT_AUDIT.md`, `ROADMAP.md`, and `TESTING.md` for verified status and remaining limitations.
+
 An academic final-year project designed to identify student learning difficulties through machine learning analysis and support parents and educators with individualized learning activity suggestions and Explainable AI (XAI) justifications.
 
 ---
@@ -155,16 +157,16 @@ To change languages, toggle dark mode, or scale fonts, click the gear icon in th
 
 **Screenings (`/api/v1/screenings`)**
 - `POST /` - Create a screening record
-- `POST /predict` - Submit questionnaire for prediction (Phase 2: mock prediction)
+- `POST /predict` - Submit questionnaire for model prediction and SHAP explanation (requires authentication)
 - `GET /` - List all screenings
 - `GET /{screening_id}` - Get screening by ID
 - `GET /student/{student_id}` - Get all screenings for a student
 
-### Phase 2 Notes
-- The backend uses SQLite for simplicity (can be upgraded to PostgreSQL in later phases)
-- Password hashing is implemented using bcrypt
-- The `/predict` endpoint currently returns mock predictions (ML model integration planned for Phase 6)
-- CORS is enabled for all origins (restrict in production)
+### Historical Phase 2 Notes
+- SQLite remains the default; `DATABASE_URL` can configure PostgreSQL when the PostgreSQL driver is installed.
+- Passwords are hashed using bcrypt.
+- Current `/predict` inference uses the bundled model and returns HTTP 503 on inference failure.
+- CORS defaults to `*` for local development. Production startup requires explicit `CORS_ORIGINS`.
 
 ---
 
@@ -204,8 +206,8 @@ Phase 3 connects the Flutter frontend with the FastAPI backend, enabling real da
 
 5. **Test the integration:**
    - In API mode, the login button will attempt to connect to the backend
-   - Currently, login is a placeholder (full JWT auth coming in Phase 4)
-   - Student and screening endpoints are ready for use
+   - API mode uses the JWT login endpoint; credentials are sent as OAuth2 form fields.
+   - Protected student, screening, and intervention endpoints require a Bearer token.
 
 ### API Services Created
 
@@ -234,8 +236,7 @@ Phase 3 connects the Flutter frontend with the FastAPI backend, enabling real da
 ### Phase 3 Notes
 - API mode can be toggled on/off from the login screen
 - Demo mode remains available for UI testing without backend
-- Current login is a placeholder (JWT authentication planned for Phase 4)
-- The `/predict` endpoint returns mock predictions until Phase 6 (ML integration)
+- The old placeholder login and mock-only prediction notes are obsolete; consult the current implementation note at the top of this file.
 
 ---
 
@@ -323,8 +324,8 @@ All student and screening endpoints now require authentication:
 ### Security Notes
 
 **Important for Production:**
-- Change `SECRET_KEY` in `backend/app/auth.py` to a strong, random value
-- Use environment variables for sensitive configuration
+- Set a strong random `SECRET_KEY` environment variable; the app refuses to start in production without it.
+- Set `APP_ENV=production` and an explicit comma-separated `CORS_ORIGINS` allowlist.
 - Enable HTTPS for all API communications
 - Implement token refresh mechanism
 - Add rate limiting to prevent brute force attacks
@@ -335,7 +336,7 @@ All student and screening endpoints now require authentication:
 - Token refresh mechanism can be added in later phases
 - All protected endpoints return 401 if token is invalid/expired
 - Demo mode bypasses authentication entirely
-- User roles (parent, teacher, student, admin) are enforced at backend level
+- Admin-only account and intervention-management operations are enforced by backend role checks. Student-level ownership and school/class authorization are not fully modeled yet.
 
 ---
 
@@ -432,11 +433,11 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 ### Backend Changes
 
 **ML Components:**
-- Random Forest classifier trained on synthetic data
+- XGBoost classifier; trained artifacts are bundled under `backend/ml/models/`.
 - Feature scaling with StandardScaler
 - SHAP TreeExplainer for feature attribution
 - Model versioning and persistence
-- Fallback to mock predictions if model unavailable
+- HTTP 503 response if model inference or explainability is unavailable; no mock risk score is returned.
 
 **ML Dependencies Added:**
 - scikit-learn (machine learning library)
@@ -447,12 +448,10 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 - joblib (model serialization)
 
 **Training Script (`ml/train_model.py`):**
-- Generates synthetic training data (1000 samples)
-- Features: reading, writing, memory, attention, math, social difficulties, age, grade
-- Target: Elevated vs Lower risk level
-- Model: Random Forest with 100 estimators
-- Saves model, scaler, and feature columns with versioning
-- Stores model metadata (accuracy, training date, version)
+- Reads a WALS CSV using a machine-specific absolute path currently defined in the script; the dataset is not included in this repository.
+- Engineers six difficulty scores, age, grade, and four encoded preference features.
+- Maps neurodivergence category labels to four risk classes and trains an XGBoost classifier.
+- Saves model, scaler, feature columns, and metadata with versioning.
 
 **Prediction Module (`ml/predictor.py`):**
 - Loads trained model and scaler
@@ -465,7 +464,7 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 - Uses real ML model for predictions
 - Integrates SHAP explainability
 - Provides top contributing features for recommendations
-- Graceful fallback to mock predictions if model unavailable
+- Returns an unavailable response if real model inference fails.
 
 ### Step-by-Step Setup
 
@@ -480,9 +479,9 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
    python ml/train_model.py
    ```
    
-   This will:
-   - Generate synthetic training data
-   - Train a Random Forest model
+   This requires the dataset at the exact path configured by `DATASET_PATH` in `ml/train_model.py`. It will:
+   - Engineer features from the source dataset
+   - Train an XGBoost model
    - Save model with versioning (e.g., `screening_model_v20240830_002400.joblib`)
    - Save scaler and feature columns
    - Save model metadata
@@ -512,10 +511,9 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 
 ### Model Details
 
-**Dataset Used:**
-- WALS Neurodivergent Learner Dataset (10,000 samples)
-- Real-world data on neurodivergent learners (ADHD, Dyslexia, Autism, Dyscalculia, Multiple conditions)
-- Mapped neurodivergence types and primary challenges to difficulty scores
+**Training Data:**
+- The training script expects a WALS-labeled CSV outside this repository. The file and its provenance are not included here, so dataset size and provenance claims have not been independently verified.
+- Labels are derived directly from the `neurodivergence_type` category; reported accuracy should not be interpreted as clinical validation.
 
 **Features Used:**
 - reading_difficulty (1-5 scale)
@@ -526,13 +524,11 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 - social_difficulty (1-5 scale)
 - age (mapped from age groups)
 - grade (mapped from education level)
+- prior e-learning experience, font type, color theme, and layout mode (ordinal encoded)
 
 **Model Performance:**
-- Training samples: 10,000
-- Training accuracy: 100%
-- Test accuracy: 100%
-- Uses balanced class weights for fair predictions
-- Feature importance: writing_difficulty (39.7%), math_difficulty (28.8%), reading_difficulty (10.1%)
+- Metadata and historical progress notes report very high accuracy, but those figures were not reproduced during this audit.
+- The feature engineering derives difficulty inputs from the same category used to create target labels; independent validation is needed before relying on these metrics.
 
 **SHAP Explainability:**
 - Provides feature-level contribution scores
@@ -547,3 +543,44 @@ Phase 6 integrates a real machine learning model for learning difficulty screeni
 - Fallback mechanism ensures system stability
 - Model can be retrained with new data without code changes
 - Feature importance analysis shows writing and math difficulties as strongest predictors
+
+---
+
+## 10. Phase 7 Flutter ML Results UI & Design System Integration
+
+### Overview
+Phase 7 drastically overhauls the Flutter app UI to match the premium, minimalist **Google Stitch Apple Monochrome HIG** design system. It brings beautiful, explainable AI visualizations natively to the mobile application.
+
+### Key Enhancements
+
+**Design System (`lib/core/theme/app_theme.dart`):**
+- Adopted strict Monochrome HIG tokens: Pure White (`#FFFFFF`) backgrounds, Off-White Surface (`#F7F7F9`), and Pitch Black (`#0A0A0A`) accents.
+- Sub-pixel precise 0.5px borders and zero-elevation flat geometry.
+- Typography updated to modern standards (Manrope / Hanken Grotesk references).
+
+**Screening Flow & Visualization:**
+- **ScreeningQuestionnaireScreen**: Completely rebuilt with clean 5-segmented rating bars for the 6 domains (Reading, Writing, Memory, Attention, Math, Social).
+- **ScreeningResultScreen**: Introduces a stunning "Hero Risk Card" layout, mapping ML risk tiers (Mild, Moderate, Elevated) to muted diagnostic colors.
+- **Explainable AI UI**: Features an intuitive Diverging SHAP Bar Chart that visually explains which factors (e.g., "Memory Difficulty") most heavily influenced the AI's decision.
+- **Clinical Narrative**: Translates mathematical probabilities into human-readable clinical notes for teachers and parents.
+
+**Core Screens Refreshed:**
+- `LoginScreen` and Dashboards (Parent, Teacher, Student) refitted into the premium monochrome visual style while retaining full Riverpod state support and JWT workflows.
+
+---
+
+## 11. Phase 8 Testing & QA
+
+### Overview
+Phase 8 tracks checks for the backend and Flutter client. The results below are historical; current verification is recorded in `TESTING.md`.
+
+### Backend Testing (Python)
+- Written comprehensive test suites (`tests/test_api.py`, `tests/test_predictor.py`).
+- The four ML predictor tests passed during the 2026-10-27 audit follow-up.
+- The API suite did not complete in the current environment; see `TESTING.md`.
+- Fully resolved Pyrefly and Pylance virtual in-memory false-positive linter errors using `.vscode/settings.json`, `.pyrefly.json` configuration, and explicit inline ignores.
+
+### Frontend Testing (Flutter/Dart)
+- Flutter analysis is not currently verified; see `TESTING.md`.
+- Fixed deprecation warnings relating to Material 3 tokens (e.g., migrating `onBackground` to `onSurface`, and `withOpacity` to `withValues`).
+- Ensured strong typing and null safety across all models and services.

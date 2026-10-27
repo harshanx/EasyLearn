@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/intervention_service.dart';
 
 class ScreeningResultScreen extends StatefulWidget {
   final String studentName;
+  final String studentId;
   final Map<String, dynamic> result;
   final Map<String, double> scores;
 
   const ScreeningResultScreen({
     Key? key,
     required this.studentName,
+    required this.studentId,
     required this.result,
     required this.scores,
   }) : super(key: key);
@@ -39,8 +40,7 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
     try {
       final service = InterventionService();
       final recsMap = await service.getRecommendations(
-        studentAge: 9,
-        studentGrade: '4',
+        studentId: widget.studentId,
         topFeatures: topFeats,
         riskLevel: _riskLevel,
       );
@@ -54,7 +54,6 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
     } catch (_) {
       if (mounted) setState(() => _isLoadingInterventions = false);
     }
-
   }
 
   String get _riskLevel =>
@@ -107,69 +106,73 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final shap = _shapValues;
     final classProbs = _classProbabilities;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bg = isDark ? AppTheme.darkBackground : const Color(0xFFFFFFFF);
+    final surface = isDark ? AppTheme.darkSurface : const Color(0xFFF7F7F9);
+    final fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A);
+    final border = isDark ? AppTheme.darkHairline : const Color(0xFFE5E5EA);
+    final textMuted = isDark ? AppTheme.ashGray : const Color(0xFF666666);
+    final textSubtle = isDark ? AppTheme.slateGray : const Color(0xFFA1A1A6);
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface,
-      appBar: AppBar(
-        backgroundColor: (isDark ? AppTheme.darkBackground : AppTheme.offWhiteSurface).withOpacity(0.9),
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, size: 22),
+      backgroundColor: bg,
+      appBar: CupertinoNavigationBar(
+        backgroundColor: bg.withOpacity(0.9),
+        border: Border(bottom: BorderSide(color: border, width: 0.5)),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Icon(CupertinoIcons.back, color: fg),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          'Explainability Audit Report',
-          style: GoogleFonts.manrope(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
+        middle: Text(
+          'EXPLAINABILITY AUDIT',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.5,
+            color: fg,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.share, size: 20),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Exporting Report PDF...'),
-                  backgroundColor: AppTheme.pitchBlack,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                ),
-              );
-            },
-          ),
-        ],
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Icon(CupertinoIcons.share, color: fg, size: 20),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Exporting Report PDF...'),
+                backgroundColor: fg,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+              ),
+            );
+          },
+        ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
             // Top Context Header
             Text(
               'COGNITIVE DIAGNOSTICS & XAI AUDIT',
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Assessment Report',
-              style: GoogleFonts.manrope(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
-                color: theme.colorScheme.onSurface,
+                color: fg,
               ),
             ),
             const SizedBox(height: 16),
@@ -178,12 +181,9 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,18 +196,18 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                         children: [
                           Text(
                             widget.studentName,
-                            style: GoogleFonts.manrope(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurface,
+                              color: fg,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Standard 4-B • Screened ${DateTime.now().year}',
-                            style: GoogleFonts.hankenGrotesk(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppTheme.slateGray,
+                              color: textMuted,
                             ),
                           ),
                         ],
@@ -215,13 +215,13 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                          color: border,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           CupertinoIcons.checkmark_shield_fill,
                           size: 20,
-                          color: theme.colorScheme.onSurface,
+                          color: fg,
                         ),
                       ),
                     ],
@@ -229,14 +229,14 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      AppTheme.buildRiskBadge(_riskLevel),
+                      _buildRiskBadge(_riskLevel, isDark),
                       const SizedBox(width: 12),
                       Text(
                         '${(_probability * 100).toStringAsFixed(1)}% Confidence',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.slateGray,
+                          color: textMuted,
                         ),
                       ),
                     ],
@@ -250,32 +250,29 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'PREDICTED RISK PROBABILITY DISTRIBUTION',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
-                      color: AppTheme.slateGray,
+                      color: textMuted,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Cohort Model Classification',
-                    style: GoogleFonts.manrope(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                      color: fg,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -285,13 +282,13 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                     borderRadius: BorderRadius.circular(9999),
                     child: Container(
                       height: 28,
-                      color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerHigh,
+                      color: border,
                       child: Row(
                         children: [
-                          _probSegment(classProbs['None'] ?? 0.05, AppTheme.pureWhite, AppTheme.pitchBlack, 'None'),
-                          _probSegment(classProbs['Mild'] ?? 0.12, AppTheme.surfaceContainerHighest, AppTheme.pitchBlack, 'Mild'),
-                          _probSegment(classProbs['Moderate'] ?? 0.18, AppTheme.slateGray, AppTheme.pureWhite, 'Mod'),
-                          _probSegment(classProbs['Elevated'] ?? 0.65, AppTheme.pitchBlack, AppTheme.pureWhite, 'Elevated'),
+                          _probSegment(classProbs['None'] ?? 0.05, isDark ? const Color(0xFF111111) : const Color(0xFFFFFFFF), isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A), 'None'),
+                          _probSegment(classProbs['Mild'] ?? 0.12, isDark ? const Color(0xFF333333) : const Color(0xFFE5E5EA), isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A), 'Mild'),
+                          _probSegment(classProbs['Moderate'] ?? 0.18, isDark ? const Color(0xFF666666) : const Color(0xFF666666), const Color(0xFFFFFFFF), 'Mod'),
+                          _probSegment(classProbs['Elevated'] ?? 0.65, isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0A0A0A), isDark ? const Color(0xFF111111) : const Color(0xFFFFFFFF), 'Elevated'),
                         ],
                       ),
                     ),
@@ -302,10 +299,10 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _legendTick('None', classProbs['None'] ?? 0.05, isDark),
-                      _legendTick('Mild', classProbs['Mild'] ?? 0.12, isDark),
-                      _legendTick('Moderate', classProbs['Moderate'] ?? 0.18, isDark),
-                      _legendTick('Elevated', classProbs['Elevated'] ?? 0.65, isDark),
+                      _legendTick('None', classProbs['None'] ?? 0.05, textMuted, fg),
+                      _legendTick('Mild', classProbs['Mild'] ?? 0.12, textMuted, fg),
+                      _legendTick('Moderate', classProbs['Moderate'] ?? 0.18, textMuted, fg),
+                      _legendTick('Elevated', classProbs['Elevated'] ?? 0.65, textMuted, fg),
                     ],
                   ),
                 ],
@@ -318,12 +315,9 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                    width: 0.5,
-                  ),
+                  color: surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: border, width: 0.5),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,25 +327,25 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                       children: [
                         Text(
                           'OBSERVED RISK CONTRIBUTORS',
-                          style: GoogleFonts.hankenGrotesk(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.0,
-                            color: AppTheme.slateGray,
+                            color: textMuted,
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                            color: border,
                             borderRadius: BorderRadius.circular(9999),
                           ),
                           child: Text(
                             'SHAP Values',
-                            style: GoogleFonts.hankenGrotesk(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
+                              color: fg,
                             ),
                           ),
                         ),
@@ -360,14 +354,14 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Rightward bars amplify risk priority; leftward indicates resilient compensation.',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.slateGray,
+                        color: textMuted,
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    ..._buildShapDivergingBars(shap, theme, isDark),
+                    ..._buildShapDivergingBars(shap, fg, textMuted, border, textSubtle, isDark),
                   ],
                 ),
               ),
@@ -378,12 +372,9 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                  width: 0.5,
-                ),
+                color: surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: border, width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,58 +384,58 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isDark ? AppTheme.pureWhite : AppTheme.pitchBlack,
+                          color: fg,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           CupertinoIcons.sparkles,
                           size: 14,
-                          color: isDark ? AppTheme.pitchBlack : AppTheme.pureWhite,
+                          color: bg,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Clinical Synthesis',
-                        style: GoogleFonts.manrope(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                          color: fg,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(14),
+                      color: border,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      '“The model detected notable friction in phoneme segmentation and short-term sequential recall, while visual-spatial problem solving remains at an age-appropriate baseline.”',
-                      style: GoogleFonts.hankenGrotesk(
+                      'This screening estimates patterns in the submitted ratings. It is not a diagnosis; review the results with a qualified education or health professional.',
+                      style: TextStyle(
                         fontSize: 14,
                         height: 1.45,
-                        color: theme.colorScheme.onSurface,
+                        color: fg,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Recommended Interventions Section
             Text(
               'RECOMMENDED CLINICAL INTERVENTIONS',
-              style: GoogleFonts.hankenGrotesk(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: AppTheme.slateGray,
+                color: textMuted,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
             if (_isLoadingInterventions)
               const Center(child: Padding(padding: EdgeInsets.all(20), child: CupertinoActivityIndicator()))
@@ -454,17 +445,13 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                 final title = item['title'] ?? 'Intervention';
                 final desc = item['description'] ?? 'Targeted clinical activity.';
 
-
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                      width: 0.5,
-                    ),
+                    color: surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: border, width: 0.5),
                   ),
                   child: Row(
                     children: [
@@ -472,13 +459,13 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                          color: border,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           CupertinoIcons.lightbulb_fill,
                           size: 18,
-                          color: theme.colorScheme.onSurface,
+                          color: fg,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -488,10 +475,10 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                           children: [
                             Text(
                               title,
-                              style: GoogleFonts.manrope(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: theme.colorScheme.onSurface,
+                                color: fg,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -499,15 +486,15 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                               desc,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.hankenGrotesk(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.slateGray,
+                                color: textMuted,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(CupertinoIcons.chevron_right, size: 16, color: AppTheme.ashGray),
+                      Icon(CupertinoIcons.chevron_right, size: 16, color: textSubtle),
                     ],
                   ),
                 );
@@ -516,53 +503,55 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.pureWhite,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                    width: 0.5,
-                  ),
+                  color: surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: border, width: 0.5),
                 ),
                 child: Row(
                   children: [
-                    const Icon(CupertinoIcons.info_circle, size: 18, color: AppTheme.slateGray),
+                    Icon(CupertinoIcons.info_circle, size: 18, color: textMuted),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Interventions available: Phonics Flash Cards, Sight Word Bingo, Memory Card Game.',
-                        style: GoogleFonts.hankenGrotesk(fontSize: 13, color: AppTheme.slateGray),
+                        'Personalized recommendations could not be loaded for this student.',
+                        style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                     ),
                   ],
                 ),
               ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
             // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface,
-                      side: BorderSide(
-                        color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
-                        width: 0.5,
-                      ),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                color: surface,
+                borderRadius: BorderRadius.circular(9999),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(9999),
+                    border: Border.all(color: border, width: 0.5),
+                  ),
+                  child: Center(
                     child: Text(
                       'Done',
-                      style: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: fg,
+                      ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -579,7 +568,7 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
         child: Center(
           child: Text(
             '${(weight * 100).round()}%',
-            style: GoogleFonts.hankenGrotesk(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: fg,
@@ -590,30 +579,30 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
     );
   }
 
-  Widget _legendTick(String name, double val, bool isDark) {
+  Widget _legendTick(String name, double val, Color textMuted, Color fg) {
     return Column(
       children: [
         Text(
           name,
-          style: GoogleFonts.hankenGrotesk(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppTheme.slateGray,
+            color: textMuted,
           ),
         ),
         Text(
           '${(val * 100).round()}%',
-          style: GoogleFonts.hankenGrotesk(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
+            color: fg,
           ),
         ),
       ],
     );
   }
 
-  List<Widget> _buildShapDivergingBars(
-      Map<String, double> shap, ThemeData theme, bool isDark) {
+  List<Widget> _buildShapDivergingBars(Map<String, double> shap, Color fg, Color textMuted, Color border, Color textSubtle, bool isDark) {
     final sorted = shap.entries.toList()
       ..sort((a, b) => b.value.abs().compareTo(a.value.abs()));
     final maxAbs =
@@ -635,18 +624,18 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
               children: [
                 Text(
                   name,
-                  style: GoogleFonts.hankenGrotesk(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
+                    color: fg,
                   ),
                 ),
                 Text(
                   '${isPositive ? '+' : ''}${val.toStringAsFixed(2)} SHAP',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: isPositive ? theme.colorScheme.onSurface : AppTheme.slateGray,
+                    color: isPositive ? fg : textMuted,
                   ),
                 ),
               ],
@@ -658,7 +647,7 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                   height: 10,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDark ? AppTheme.darkSurfaceContainer : AppTheme.surfaceContainerLow,
+                    color: border,
                     borderRadius: BorderRadius.circular(9999),
                   ),
                 ),
@@ -667,7 +656,7 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                     alignment: Alignment.center,
                     child: Container(
                       width: 1,
-                      color: isDark ? AppTheme.darkHairline : AppTheme.paleHairline,
+                      color: textSubtle,
                     ),
                   ),
                 ),
@@ -681,8 +670,8 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
                         height: 10,
                         decoration: BoxDecoration(
                           color: isPositive
-                              ? (isDark ? AppTheme.pureWhite : AppTheme.pitchBlack)
-                              : AppTheme.ashGray,
+                              ? fg
+                              : textMuted,
                           borderRadius: BorderRadius.circular(9999),
                         ),
                       ),
@@ -695,5 +684,48 @@ class _ScreeningResultScreenState extends State<ScreeningResultScreen> {
         ),
       );
     }).toList();
+  }
+
+  Widget _buildRiskBadge(String riskLevel, bool isDark) {
+    final normRisk = riskLevel.trim().toLowerCase();
+    Color bg;
+    Color fg;
+    Border? border;
+
+    if (normRisk == 'none' || normRisk == 'baseline' || normRisk == 'low') {
+      bg = isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+      fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      border = Border.all(color: fg, width: 1);
+    } else if (normRisk == 'mild') {
+      bg = isDark ? const Color(0xFF333333) : const Color(0xFFE5E5EA);
+      fg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      border = null;
+    } else if (normRisk == 'moderate') {
+      bg = isDark ? const Color(0xFF666666) : const Color(0xFF555555);
+      fg = const Color(0xFFFFFFFF);
+      border = null;
+    } else {
+      bg = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF111111);
+      fg = isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+      border = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: border,
+      ),
+      child: Text(
+        riskLevel.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: fg,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
   }
 }

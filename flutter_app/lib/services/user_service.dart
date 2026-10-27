@@ -34,7 +34,7 @@ class UserService {
   // Get all users
   Future<List<Map<String, dynamic>>> getUsers({int skip = 0, int limit = 100}) async {
     final response = await _apiService.get('${ApiConfig.usersEndpoint}?skip=$skip&limit=$limit');
-    return (response['users'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    return (response as List?)?.cast<Map<String, dynamic>>() ?? [];
   }
   
   // Get user by ID
@@ -72,13 +72,12 @@ class UserService {
   }) async {
     try {
       // Use form-data for OAuth2 login
-      final response = await _apiService.post(
+      final response = await _apiService.postForm(
         '${ApiConfig.apiVersion}/auth/login',
-        body: {
+        fields: {
           'username': username,
           'password': password,
         },
-        requireAuth: false,
       );
       
       // Save auth data if login successful

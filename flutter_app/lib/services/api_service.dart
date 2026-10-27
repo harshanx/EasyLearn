@@ -26,7 +26,7 @@ class ApiService {
   }
   
   // Generic GET request
-  Future<Map<String, dynamic>> get(String endpoint, {bool requireAuth = true}) async {
+  Future<dynamic> get(String endpoint, {bool requireAuth = true}) async {
     try {
       final headers = await _getHeaders(includeAuth: requireAuth);
       final response = await _client
@@ -43,7 +43,7 @@ class ApiService {
   }
   
   // Generic POST request
-  Future<Map<String, dynamic>> post(String endpoint, {Map<String, dynamic>? body, bool requireAuth = true}) async {
+  Future<dynamic> post(String endpoint, {Map<String, dynamic>? body, bool requireAuth = true}) async {
     try {
       final headers = await _getHeaders(includeAuth: requireAuth);
       final response = await _client
@@ -55,6 +55,31 @@ class ApiService {
           .timeout(Duration(seconds: ApiConfig.timeoutDuration));
       
       return _handleResponse(response);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // OAuth2PasswordRequestForm endpoints require URL-encoded form fields.
+  Future<Map<String, dynamic>> postForm(
+    String endpoint, {
+    required Map<String, String> fields,
+    bool requireAuth = false,
+  }) async {
+    try {
+      final headers = <String, String>{'Content-Type': 'application/x-www-form-urlencoded'};
+      if (requireAuth) {
+        final token = await _authService.getToken();
+        if (token != null && token.isNotEmpty) headers['Authorization'] = 'Bearer $token';
+      }
+      final response = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+            headers: headers,
+            body: fields,
+          )
+          .timeout(Duration(seconds: ApiConfig.timeoutDuration));
+      return _handleResponse(response) as Map<String, dynamic>;
     } catch (e) {
       throw _handleError(e);
     }
@@ -96,12 +121,12 @@ class ApiService {
   }
   
   // Handle HTTP response
-  Map<String, dynamic> _handleResponse(http.Response response) {
+  dynamic _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
         return {};
       }
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return jsonDecode(response.body);
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Please login again');
     } else {
